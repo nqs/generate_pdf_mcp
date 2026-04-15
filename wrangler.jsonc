@@ -1,0 +1,32 @@
+{
+  "name": "pdf-mcp-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // R2 bucket for PDF storage
+  "r2_buckets": [
+    {
+      "binding": "PDF_BUCKET",
+      "bucket_name": "pdf-mcp-storage"
+    }
+  ],
+
+  // Durable Object for McpAgent sessions
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "PDF_MCP",
+        "class_name": "PDFMcpAgent"
+      }
+    ]
+  },
+
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_classes": ["PDFMcpAgent"]
+    }
+  ]
+}
+
