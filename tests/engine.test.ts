@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { PDFLayoutEngine } from "../src/pdf/engine";
-import { getTheme, getPageDimensions } from "../src/pdf/themes";
+import { DEFAULT_STYLE, resolveStyle, getPageDimensions } from "../src/pdf/themes";
 
 describe("PDFLayoutEngine", () => {
   let engine: PDFLayoutEngine;
 
   beforeEach(async () => {
-    engine = new PDFLayoutEngine({ pageSize: "Letter", theme: "professional" });
+    engine = new PDFLayoutEngine({ pageSize: "Letter" });
     await engine.initialize();
   });
 
@@ -17,9 +17,8 @@ describe("PDFLayoutEngine", () => {
   });
 
   it("initializes cursor at pageHeight - margins.top", () => {
-    const theme = getTheme("professional");
     const [, height] = getPageDimensions("Letter");
-    expect(engine.getCursorY()).toBe(height - theme.margins.top);
+    expect(engine.getCursorY()).toBe(height - DEFAULT_STYLE.margins.top);
   });
 
   it("tracks cursor position when moving", () => {
@@ -29,15 +28,13 @@ describe("PDFLayoutEngine", () => {
   });
 
   it("calculates contentWidth correctly", () => {
-    const theme = getTheme("professional");
     const [width] = getPageDimensions("Letter");
-    expect(engine.contentWidth).toBe(width - theme.margins.left - theme.margins.right);
+    expect(engine.contentWidth).toBe(width - DEFAULT_STYLE.margins.left - DEFAULT_STYLE.margins.right);
   });
 
   it("calculates remainingSpace correctly", () => {
-    const theme = getTheme("professional");
     const [, height] = getPageDimensions("Letter");
-    const expectedRemaining = height - theme.margins.top - theme.margins.bottom;
+    const expectedRemaining = height - DEFAULT_STYLE.margins.top - DEFAULT_STYLE.margins.bottom;
     expect(engine.remainingSpace).toBe(expectedRemaining);
   });
 
@@ -50,17 +47,14 @@ describe("PDFLayoutEngine", () => {
   });
 
   it("ensureSpace triggers new page when not enough room", () => {
-    // Move cursor close to bottom margin
-    const theme = getTheme("professional");
     const [, height] = getPageDimensions("Letter");
-    const usableHeight = height - theme.margins.top - theme.margins.bottom;
+    const usableHeight = height - DEFAULT_STYLE.margins.top - DEFAULT_STYLE.margins.bottom;
     engine.moveCursor(usableHeight - 10); // only 10pt left
     expect(engine.getPageCount()).toBe(1);
 
     engine.ensureSpace(50); // needs 50pt, only 10pt available
     expect(engine.getPageCount()).toBe(2);
-    // Cursor should be reset to top of new page
-    expect(engine.getCursorY()).toBe(height - theme.margins.top);
+    expect(engine.getCursorY()).toBe(height - DEFAULT_STYLE.margins.top);
   });
 
   it("ensureSpace does NOT add page when enough room", () => {
@@ -69,16 +63,13 @@ describe("PDFLayoutEngine", () => {
   });
 
   it("multi-page generation produces correct page count", () => {
-    const theme = getTheme("professional");
     const [, height] = getPageDimensions("Letter");
-    const usableHeight = height - theme.margins.top - theme.margins.bottom;
+    const usableHeight = height - DEFAULT_STYLE.margins.top - DEFAULT_STYLE.margins.bottom;
 
-    // Fill 5 pages worth of content
     for (let i = 0; i < 5; i++) {
       engine.ensureSpace(20);
       engine.moveCursor(usableHeight);
     }
-    // First page + 4 additional pages triggered by ensureSpace
     expect(engine.getPageCount()).toBe(5);
   });
 
@@ -87,10 +78,22 @@ describe("PDFLayoutEngine", () => {
     expect(engine.getBoldFont()).toBeDefined();
   });
 
-  it("returns theme configuration", () => {
+  it("returns theme configuration with default style", () => {
     const theme = engine.getTheme();
-    expect(theme.name).toBe("professional");
     expect(theme.fontSize.body).toBe(11);
+    expect(theme.colors.accent).toBe("#2563eb");
+  });
+
+  it("accepts style overrides", async () => {
+    const customEngine = new PDFLayoutEngine({
+      pageSize: "Letter",
+      style: { fontFamily: "Courier", lineHeight: 1.8 },
+    });
+    await customEngine.initialize();
+    const theme = customEngine.getTheme();
+    expect(theme.lineHeight).toBe(1.8);
+    // font family should be resolved to StandardFonts.Courier
+    expect(theme.fontSize.body).toBe(11); // default preserved
   });
 
   it("saves PDF as Uint8Array", async () => {
@@ -100,18 +103,18 @@ describe("PDFLayoutEngine", () => {
   });
 });
 
-describe("themes", () => {
-  it("returns professional theme by default", () => {
-    const theme = getTheme("unknown");
-    expect(theme.name).toBe("professional");
+describe("resolveStyle", () => {
+  it("returns default style when no partial provided", () => {
+    const theme = resolveStyle();
+    expect(theme.fontSize.body).toBe(DEFAULT_STYLE.fontSize.body);
+    expect(theme.colors.accent).toBe(DEFAULT_STYLE.colors.accent);
   });
 
-  it("returns all three theme presets", () => {
-    for (const name of ["professional", "minimal", "academic"] as const) {
-      const theme = getTheme(name);
-      expect(theme.name).toBe(name);
-      expect(theme.fontSize.body).toBeGreaterThan(0);
-    }
+  it("deep-merges partial style with defaults", () => {
+    const theme = resolveStyle({ fontSize: { title: 40 }, lineHeight: 2.0 });
+    expect(theme.fontSize.title).toBe(40);
+    expect(theme.fontSize.body).toBe(11); // default preserved
+    expect(theme.lineHeight).toBe(2.0);
   });
 
   it("returns correct page dimensions", () => {

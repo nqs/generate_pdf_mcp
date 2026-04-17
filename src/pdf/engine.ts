@@ -1,10 +1,10 @@
 import { PDFDocument, PDFFont, PDFPage } from "pdf-lib";
-import type { PageSize } from "./types";
-import { type ThemeConfig, getPageDimensions, getTheme } from "./themes";
+import type { PageSize, StyleSheet } from "./types";
+import { type ThemeConfig, getPageDimensions, resolveStyle } from "./themes";
 
 export interface LayoutEngineOptions {
   pageSize?: PageSize;
-  theme?: string;
+  style?: StyleSheet;
 }
 
 export class PDFLayoutEngine {
@@ -22,7 +22,7 @@ export class PDFLayoutEngine {
     const [width, height] = getPageDimensions(options.pageSize ?? "Letter");
     this.pageWidth = width;
     this.pageHeight = height;
-    this.theme = getTheme(options.theme ?? "professional");
+    this.theme = resolveStyle(options.style);
     this.margins = { ...this.theme.margins };
   }
 

@@ -1,8 +1,7 @@
 import { StandardFonts } from "pdf-lib";
-import type { PageSize, ThemeName } from "./types";
+import type { FontFamily, PageSize, StyleSheet } from "./types";
 
 export interface ThemeConfig {
-  name: ThemeName;
   fontFamily: StandardFonts;
   boldFontFamily: StandardFonts;
   fontSize: {
@@ -22,8 +21,7 @@ export interface ThemeConfig {
   lineHeight: number;
 }
 
-const professional: ThemeConfig = {
-  name: "professional",
+export const DEFAULT_STYLE: ThemeConfig = {
   fontFamily: StandardFonts.Helvetica,
   boldFontFamily: StandardFonts.HelveticaBold,
   fontSize: { title: 28, h1: 22, h2: 18, h3: 15, body: 11 },
@@ -37,48 +35,38 @@ const professional: ThemeConfig = {
   lineHeight: 1.4,
 };
 
-const minimal: ThemeConfig = {
-  name: "minimal",
-  fontFamily: StandardFonts.Helvetica,
-  boldFontFamily: StandardFonts.HelveticaBold,
-  fontSize: { title: 24, h1: 20, h2: 16, h3: 13, body: 10 },
-  colors: {
-    title: "#000000",
-    heading: "#000000",
-    body: "#444444",
-    accent: "#666666",
-  },
-  margins: { top: 50, right: 50, bottom: 50, left: 50 },
-  lineHeight: 1.3,
+const fontMap: Record<FontFamily, { regular: StandardFonts; bold: StandardFonts }> = {
+  Helvetica: { regular: StandardFonts.Helvetica, bold: StandardFonts.HelveticaBold },
+  TimesRoman: { regular: StandardFonts.TimesRoman, bold: StandardFonts.TimesRomanBold },
+  Courier: { regular: StandardFonts.Courier, bold: StandardFonts.CourierBold },
 };
 
-const academic: ThemeConfig = {
-  name: "academic",
-  fontFamily: StandardFonts.TimesRoman,
-  boldFontFamily: StandardFonts.TimesRomanBold,
-  fontSize: { title: 26, h1: 20, h2: 16, h3: 14, body: 12 },
-  colors: {
-    title: "#000000",
-    heading: "#000000",
-    body: "#000000",
-    accent: "#000000",
-  },
-  margins: { top: 72, right: 72, bottom: 72, left: 72 },
-  lineHeight: 1.5,
-};
-
-const themes: Record<ThemeName, ThemeConfig> = {
-  professional,
-  minimal,
-  academic,
-};
-
-export function getTheme(name: string): ThemeConfig {
-  const theme = themes[name as ThemeName];
-  if (!theme) {
-    return professional;
+export function resolveStyle(partial?: StyleSheet): ThemeConfig {
+  if (!partial) {
+    return { ...DEFAULT_STYLE };
   }
-  return theme;
+
+  const fonts = partial.fontFamily
+    ? fontMap[partial.fontFamily]
+    : { regular: DEFAULT_STYLE.fontFamily, bold: DEFAULT_STYLE.boldFontFamily };
+
+  return {
+    fontFamily: fonts.regular,
+    boldFontFamily: fonts.bold,
+    fontSize: {
+      ...DEFAULT_STYLE.fontSize,
+      ...partial.fontSize,
+    },
+    colors: {
+      ...DEFAULT_STYLE.colors,
+      ...partial.colors,
+    },
+    margins: {
+      ...DEFAULT_STYLE.margins,
+      ...partial.margins,
+    },
+    lineHeight: partial.lineHeight ?? DEFAULT_STYLE.lineHeight,
+  };
 }
 
 const pageDimensions: Record<PageSize, [number, number]> = {

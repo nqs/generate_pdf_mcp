@@ -5,7 +5,7 @@ MCP server on Cloudflare Workers that generates PDF documents from structured JS
 ## Features
 
 - **11 content element types** — title, h1–h3, paragraph, image, image\_url, list, table, page\_break, blockquote, divider
-- **3 built-in themes** — professional, minimal, academic
+- **Fully customizable style sheets** — override fonts, sizes, colors, margins, and line height
 - **3 page sizes** — A4, Letter, Legal
 - **Image support** — base64 image embedding and remote URL image fetching
 - **R2 storage** — generated PDFs stored in Cloudflare R2 with signed download URLs
@@ -37,16 +37,29 @@ The MCP server is available at `http://localhost:8787/mcp`.
 
 Generate a PDF document from structured content. Returns a download URL.
 
-| Parameter  | Type   | Required | Default          | Description                                    |
-|------------|--------|----------|------------------|------------------------------------------------|
-| `filename` | string | yes      | —                | Output filename (e.g. `"report.pdf"`)          |
-| `theme`    | string | no       | `"professional"` | `"professional"`, `"minimal"`, or `"academic"` |
-| `pageSize` | string | no       | `"A4"`           | `"A4"`, `"Letter"`, or `"Legal"`               |
-| `content`  | string | yes      | —                | JSON string of content elements array          |
+| Parameter  | Type   | Required | Default | Description                                    |
+|------------|--------|----------|---------|------------------------------------------------|
+| `filename` | string | yes      | —       | Output filename (e.g. `"report.pdf"`)          |
+| `style`    | string | no       | —       | JSON string of style overrides (see below)     |
+| `pageSize` | string | no       | `"A4"` | `"A4"`, `"Letter"`, or `"Legal"`               |
+| `content`  | string | yes      | —       | JSON string of content elements array          |
 
-### `list_themes`
+#### Style Overrides
 
-Returns available themes with descriptions. No parameters.
+All fields are optional — omitted fields use professional defaults.
+
+```json
+{
+  "fontFamily": "Helvetica",
+  "fontSize": { "title": 28, "h1": 22, "h2": 18, "h3": 15, "body": 11 },
+  "colors": { "title": "#1a1a2e", "heading": "#1a1a2e", "body": "#333333", "accent": "#2563eb" },
+  "margins": { "top": 60, "right": 60, "bottom": 60, "left": 60 },
+  "lineHeight": 1.4
+}
+```
+
+- `fontFamily` — `"Helvetica"`, `"TimesRoman"`, or `"Courier"`
+- `colors` — hex color strings (e.g. `"#2563eb"`)
 
 ## Content Elements Reference
 
@@ -143,7 +156,6 @@ The `content` parameter accepts a JSON array of elements. Each element has a `ty
 ```json
 {
   "filename": "quarterly-report.pdf",
-  "theme": "professional",
   "pageSize": "A4",
   "content": "[{\"type\":\"title\",\"text\":\"Q1 2026 Report\"},{\"type\":\"paragraph\",\"text\":\"This report summarizes key metrics and milestones from the first quarter.\"},{\"type\":\"h1\",\"text\":\"Highlights\"},{\"type\":\"list\",\"style\":\"bullet\",\"items\":[\"Revenue up 15% quarter-over-quarter\",\"Launched 3 new product features\",\"Customer satisfaction score: 4.8/5\"]},{\"type\":\"h1\",\"text\":\"Team Overview\"},{\"type\":\"table\",\"headers\":[\"Department\",\"Headcount\",\"Budget\"],\"rows\":[[\"Engineering\",\"42\",\"$2.1M\"],[\"Design\",\"12\",\"$600K\"],[\"Marketing\",\"18\",\"$1.2M\"]]},{\"type\":\"page_break\"},{\"type\":\"h1\",\"text\":\"Next Steps\"},{\"type\":\"paragraph\",\"text\":\"Focus areas for Q2 include international expansion and platform reliability improvements.\"}]"
 }
@@ -226,12 +238,12 @@ npx tsc --noEmit     # Type check
 │       └── deploy.yml      # CI/CD — deploy on push to main
 ├── src/
 │   ├── index.ts            # Worker entry point, routes MCP and download requests
-│   ├── mcp-server.ts       # MCP tool definitions (generate_pdf, list_themes)
+│   ├── mcp-server.ts       # MCP tool definitions (generate_pdf)
 │   ├── pdf/
 │   │   ├── elements.ts     # Content element renderers
 │   │   ├── engine.ts       # PDF layout engine (page management, text wrapping)
 │   │   ├── schemas.ts      # Zod validation schemas for content elements
-│   │   ├── themes.ts       # Theme configurations (professional, minimal, academic)
+│   │   ├── themes.ts       # Default style and style resolution
 │   │   └── types.ts        # TypeScript type definitions
 │   ├── storage/
 │   │   └── r2.ts           # R2 upload/download helpers

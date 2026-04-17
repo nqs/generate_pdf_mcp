@@ -9,7 +9,7 @@ describe("wrapText", () => {
   let engine: PDFLayoutEngine;
 
   beforeEach(async () => {
-    engine = new PDFLayoutEngine({ pageSize: "Letter", theme: "professional" });
+    engine = new PDFLayoutEngine({ pageSize: "Letter" });
     await engine.initialize();
   });
 
@@ -78,7 +78,7 @@ describe("renderElement dispatch", () => {
   let engine: PDFLayoutEngine;
 
   beforeEach(async () => {
-    engine = new PDFLayoutEngine({ pageSize: "Letter", theme: "professional" });
+    engine = new PDFLayoutEngine({ pageSize: "Letter" });
     await engine.initialize();
   });
 
@@ -158,7 +158,7 @@ describe("renderElement dispatch", () => {
 
 describe("integration: full PDF with all element types", () => {
   it("generates valid PDF bytes with every element type", async () => {
-    const engine = new PDFLayoutEngine({ pageSize: "Letter", theme: "professional" });
+    const engine = new PDFLayoutEngine({ pageSize: "Letter" });
     await engine.initialize();
 
     const elements: ContentElement[] = [

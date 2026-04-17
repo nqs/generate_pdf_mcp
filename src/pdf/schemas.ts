@@ -13,7 +13,29 @@ import type {
 // ---------------------------------------------------------------------------
 
 export const PageSizeSchema = z.enum(["A4", "Letter", "Legal"]);
-export const ThemeNameSchema = z.enum(["professional", "minimal", "academic"]);
+export const StyleSheetSchema = z.object({
+  fontFamily: z.enum(["Helvetica", "TimesRoman", "Courier"]).optional(),
+  fontSize: z.object({
+    title: z.number().optional(),
+    h1: z.number().optional(),
+    h2: z.number().optional(),
+    h3: z.number().optional(),
+    body: z.number().optional(),
+  }).optional(),
+  colors: z.object({
+    title: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+    heading: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+    body: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+    accent: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  }).optional(),
+  margins: z.object({
+    top: z.number().optional(),
+    right: z.number().optional(),
+    bottom: z.number().optional(),
+    left: z.number().optional(),
+  }).optional(),
+  lineHeight: z.number().optional(),
+});
 export const ListStyleSchema = z.enum(["bullet", "numbered"]);
 export const ImageFormatSchema = z.enum(["png", "jpg"]);
 
@@ -111,7 +133,7 @@ export const ContentElementSchema = z.discriminatedUnion("type", [
 
 export const GeneratePDFInputSchema = z.object({
   filename: z.string().min(1),
-  theme: ThemeNameSchema.optional().default("professional"),
+  style: StyleSheetSchema.optional(),
   pageSize: PageSizeSchema.optional().default("A4"),
   content: z.array(ContentElementSchema).min(1),
 });

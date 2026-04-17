@@ -5,8 +5,30 @@
 /** Supported page sizes for PDF generation. */
 export type PageSize = "A4" | "Letter" | "Legal";
 
-/** Built-in visual themes. */
-export type ThemeName = "professional" | "minimal" | "academic";
+/** Style sheet for customizing PDF appearance. All fields optional — omitted fields use professional defaults. */
+export interface StyleSheet {
+  fontFamily?: FontFamily;
+  fontSize?: {
+    title?: number;
+    h1?: number;
+    h2?: number;
+    h3?: number;
+    body?: number;
+  };
+  colors?: {
+    title?: string;
+    heading?: string;
+    body?: string;
+    accent?: string;
+  };
+  margins?: {
+    top?: number;
+    right?: number;
+    bottom?: number;
+    left?: number;
+  };
+  lineHeight?: number;
+}
 
 /** List rendering style. */
 export type ListStyle = "bullet" | "numbered";
@@ -167,8 +189,8 @@ export type ContentElement =
 export interface GeneratePDFInput {
   /** Output filename (will be used as the R2 key). */
   filename: string;
-  /** Visual theme (defaults to "professional"). */
-  theme?: ThemeName;
+  /** Style overrides (omitted fields use professional defaults). */
+  style?: StyleSheet;
   /** Page size (defaults to "A4"). */
   pageSize?: PageSize;
   /** Ordered list of content elements to render. */

@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   GeneratePDFInputSchema,
   ContentElementSchema,
+  StyleSheetSchema,
   validateGeneratePdfInput,
 } from "../src/pdf/schemas.js";
 
@@ -17,7 +18,13 @@ const validMinimalInput = {
 
 const validFullInput = {
   filename: "report.pdf",
-  theme: "academic",
+  style: {
+    fontFamily: "TimesRoman",
+    fontSize: { title: 26, body: 12 },
+    colors: { title: "#000000" },
+    margins: { top: 72, right: 72, bottom: 72, left: 72 },
+    lineHeight: 1.5,
+  },
   pageSize: "Letter",
   content: [
     { type: "title", text: "My Report" },
@@ -43,15 +50,15 @@ const validFullInput = {
 describe("GeneratePDFInputSchema — valid payloads", () => {
   it("accepts minimal input and applies defaults", () => {
     const result = GeneratePDFInputSchema.parse(validMinimalInput);
-    expect(result.theme).toBe("professional");
+    expect(result.style).toBeUndefined();
     expect(result.pageSize).toBe("A4");
     expect(result.content).toHaveLength(1);
   });
 
-  it("accepts a full input with all element types", () => {
+  it("accepts a full input with style overrides and all element types", () => {
     const result = GeneratePDFInputSchema.parse(validFullInput);
     expect(result.filename).toBe("report.pdf");
-    expect(result.theme).toBe("academic");
+    expect(result.style?.fontFamily).toBe("TimesRoman");
     expect(result.content).toHaveLength(13);
   });
 });
@@ -76,16 +83,6 @@ describe("GeneratePDFInputSchema — invalid top-level", () => {
   it("rejects empty content array", () => {
     expect(() =>
       GeneratePDFInputSchema.parse({ filename: "a.pdf", content: [] })
-    ).toThrow();
-  });
-
-  it("rejects invalid theme", () => {
-    expect(() =>
-      GeneratePDFInputSchema.parse({
-        filename: "a.pdf",
-        theme: "fancy",
-        content: [{ type: "divider" }],
-      })
     ).toThrow();
   });
 
@@ -178,3 +175,50 @@ describe("validateGeneratePdfInput", () => {
   });
 });
 
+
+// ---------------------------------------------------------------------------
+// StyleSheet validation
+// ---------------------------------------------------------------------------
+
+describe("StyleSheetSchema", () => {
+  it("accepts an empty style sheet (all optional)", () => {
+    const result = StyleSheetSchema.parse({});
+    expect(result).toEqual({});
+  });
+
+  it("accepts a partial style sheet", () => {
+    const result = StyleSheetSchema.parse({
+      fontFamily: "Courier",
+      lineHeight: 1.6,
+    });
+    expect(result.fontFamily).toBe("Courier");
+    expect(result.lineHeight).toBe(1.6);
+  });
+
+  it("accepts a full style sheet", () => {
+    const result = StyleSheetSchema.parse({
+      fontFamily: "Helvetica",
+      fontSize: { title: 30, h1: 24, h2: 20, h3: 16, body: 12 },
+      colors: { title: "#111111", heading: "#222222", body: "#333333", accent: "#444444" },
+      margins: { top: 50, right: 50, bottom: 50, left: 50 },
+      lineHeight: 1.5,
+    });
+    expect(result.fontFamily).toBe("Helvetica");
+    expect(result.fontSize?.title).toBe(30);
+  });
+
+  it("rejects invalid hex color", () => {
+    expect(() =>
+      StyleSheetSchema.parse({ colors: { title: "red" } })
+    ).toThrow();
+    expect(() =>
+      StyleSheetSchema.parse({ colors: { title: "#GGG000" } })
+    ).toThrow();
+  });
+
+  it("rejects invalid font family", () => {
+    expect(() =>
+      StyleSheetSchema.parse({ fontFamily: "Comic Sans" })
+    ).toThrow();
+  });
+});
