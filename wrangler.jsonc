@@ -22,10 +22,14 @@
     ]
   },
 
+  // Custom domain routing
+  "routes": [
+    { "pattern": "pdf-mcp-worker.mcp.nqs.io", "custom_domain": true }
+  ],
+
   // Environment variables
-  // Production WORKER_URL should be set via Cloudflare dashboard or `wrangler secret`
   "vars": {
-    "WORKER_URL": "http://localhost:8787"
+    "WORKER_URL": "https://pdf-mcp-worker.mcp.nqs.io"
   },
 
   "migrations": [

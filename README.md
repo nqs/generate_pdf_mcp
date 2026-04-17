@@ -175,7 +175,7 @@ Accepts raw Markdown text and renders it using the existing element types (headi
 {
   "success": true,
   "filename": "quarterly-report.pdf",
-  "download_url": "https://your-worker.workers.dev/download/quarterly-report.pdf",
+  "download_url": "https://pdf-mcp-worker.mcp.nqs.io/download/quarterly-report.pdf",
   "expires_in": 3600,
   "size_bytes": 24530,
   "pages": 2
@@ -192,19 +192,21 @@ Add to your Claude Desktop MCP configuration (`claude_desktop_config.json`):
 {
   "mcpServers": {
     "pdf-generator": {
-      "url": "http://localhost:8787/mcp"
+      "url": "https://pdf-mcp-worker.mcp.nqs.io/mcp"
     }
   }
 }
 ```
 
+For local development, use `http://localhost:8787/mcp` instead.
+
 ### LibreChat
 
-Add the MCP server URL (`http://localhost:8787/mcp`) as an MCP tool server in your LibreChat configuration.
+Add the MCP server URL (`https://pdf-mcp-worker.mcp.nqs.io/mcp`) as an MCP tool server in your LibreChat configuration. For local development, use `http://localhost:8787/mcp`.
 
 ### Other MCP Clients
 
-Any MCP client that supports Streamable HTTP transport can connect to the `/mcp` endpoint.
+Any MCP client that supports Streamable HTTP transport can connect to the `/mcp` endpoint at `https://pdf-mcp-worker.mcp.nqs.io/mcp`.
 
 ## Deployment
 
@@ -221,7 +223,7 @@ npm run deploy
    ```bash
    npx wrangler r2 bucket create pdf-mcp-storage
    ```
-3. Set `WORKER_URL` to your production Worker URL in the Cloudflare dashboard (Settings → Variables)
+3. The custom domain `pdf-mcp-worker.mcp.nqs.io` is configured in `wrangler.jsonc` and will be set up automatically on deploy
 
 ### CI/CD
 
